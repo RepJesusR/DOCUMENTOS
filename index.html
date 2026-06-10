@@ -173,3 +173,528 @@
       border-radius: 4px;
       white-space: nowrap;
       align-self: flex-start;
+      flex-shrink: 0;
+    }
+    .badge-ok { background: var(--green-bg); color: var(--green); }
+    .badge-warn { background: var(--orange-bg); color: var(--orange); }
+    .badge-venc { background: var(--red-bg); color: var(--red); }
+    .badge-neutral { background: var(--border); color: var(--text-2); }
+
+    /* BTN SUBIR */
+    .btn-upload {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      background: var(--teal);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      font-family: var(--sans);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+      text-decoration: none;
+    }
+    .btn-upload:hover { background: var(--teal-dark); }
+    .btn-upload svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+    /* MODAL SUBIR */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border-radius: 16px 16px 0 0;
+      width: 100%;
+      max-width: 600px;
+      padding: 24px 20px 40px;
+      animation: slideUp 0.25s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    .modal-handle {
+      width: 36px; height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 0 auto 20px;
+    }
+    .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; }
+
+    .form-group { margin-bottom: 16px; }
+    .form-label { font-size: 12px; font-weight: 500; color: var(--text-2); margin-bottom: 6px; display: block; }
+    .form-select, .form-input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 11px 14px;
+      font-family: var(--sans);
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+      appearance: none;
+    }
+    .form-select:focus, .form-input:focus { border-color: var(--teal); }
+
+    .file-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-sm);
+      padding: 28px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .file-zone:hover { border-color: var(--teal); background: var(--teal-bg); }
+    .file-zone.has-file { border-color: var(--teal); background: var(--teal-bg); }
+    .file-zone-icon { font-size: 28px; margin-bottom: 8px; }
+    .file-zone-text { font-size: 13px; color: var(--text-2); }
+    .file-zone-name { font-size: 12px; color: var(--teal); font-weight: 500; margin-top: 4px; font-family: var(--mono); }
+    #fileInput { display: none; }
+
+    .btn-submit {
+      width: 100%;
+      background: var(--red);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      font-family: var(--sans);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.15s;
+    }
+    .btn-submit:hover { background: var(--red-dark); }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .btn-cancel {
+      width: 100%;
+      background: transparent;
+      color: var(--text-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      font-family: var(--sans);
+      font-size: 14px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #111;
+      color: #fff;
+      font-size: 13px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      z-index: 999;
+      transition: transform 0.3s;
+      white-space: nowrap;
+      max-width: 90vw;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { background: var(--green); }
+    .toast.error { background: var(--red); }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">UNIGIS <span>/ Documentos</span></div>
+  <div class="topbar-tag">Mobile</div>
+</div>
+
+<!-- LOADING -->
+<div id="view-loading">
+  <div class="spinner"></div>
+  <p class="loading-text">Cargando documentos...</p>
+</div>
+
+<!-- ERROR -->
+<div id="view-error">
+  <div class="state-card">
+    <div class="state-icon">⚠️</div>
+    <div class="state-title">No se pudo cargar</div>
+    <div class="state-sub" id="error-msg">Verifique su conexión e intente nuevamente.</div>
+  </div>
+</div>
+
+<!-- EMPTY -->
+<div id="view-empty">
+  <div class="container">
+    <div class="profile-card" id="profile-empty"></div>
+    <div class="state-card" style="margin-top:0">
+      <div class="state-icon">📂</div>
+      <div class="state-title">Sin documentos aún</div>
+      <div class="state-sub">Suba su primer documento usando el botón de abajo.</div>
+    </div>
+    <br/>
+    <button class="btn-upload" onclick="openModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+      Subir documento
+    </button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="view-main">
+  <div class="container">
+    <div class="profile-card" id="profile-card"></div>
+    <p class="section-label">Mis documentos</p>
+    <div class="doc-list" id="doc-list"></div>
+    <button class="btn-upload" onclick="openModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+      Subir documento
+    </button>
+  </div>
+</div>
+
+<!-- MODAL SUBIR -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Subir documento</div>
+
+    <div class="form-group">
+      <label class="form-label">Tipo de documento</label>
+      <select class="form-select" id="tipoDoc">
+        <option value="DNI">Documento Nacional de Identidad</option>
+        <option value="LC">Libreta Cívica</option>
+        <option value="DOC">Documentación General</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Fecha de emisión</label>
+      <input type="date" class="form-input" id="fechaEmision"/>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Fecha de vencimiento</label>
+      <input type="date" class="form-input" id="fechaVencimiento"/>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Archivo (foto o PDF)</label>
+      <div class="file-zone" id="fileZone" onclick="document.getElementById('fileInput').click()">
+        <div class="file-zone-icon">📎</div>
+        <div class="file-zone-text">Toque para seleccionar imagen o PDF</div>
+        <div class="file-zone-name" id="fileName"></div>
+      </div>
+      <input type="file" id="fileInput" accept="image/*,application/pdf" onchange="onFileChange(event)"/>
+    </div>
+
+    <button class="btn-submit" id="btnEnviar" onclick="submitDoc()">Enviar documento</button>
+    <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SOAP_URL = 'https://cloud-test.unigis.com/SOPROCAL/mapi/soap/logistic/service.asmx';
+const API_KEY  = '93-C0-55-3C-B3-1';
+
+let conductor = { nroDoc: '', nombre: '', apellido: '', idConductor: null };
+
+// ── INIT ──
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const nrodoc  = params.get('nrodoc') || params.get('NroDocumento') || '';
+  const nombre  = decodeURIComponent(params.get('nombre') || '');
+
+  if (!nrodoc) {
+    showView('error');
+    document.getElementById('error-msg').textContent =
+      'No se recibió identificación del conductor. Acceda desde UNIGIS Deliveries.';
+    return;
+  }
+
+  conductor.nroDoc  = nrodoc;
+  conductor.nombre  = nombre || nrodoc;
+
+  // Fecha default hoy
+  const hoy = new Date().toISOString().split('T')[0];
+  document.getElementById('fechaEmision').value = hoy;
+
+  showView('loading');
+  cargarConductorYDocumentos(nrodoc);
+});
+
+// ── SOAP HELPER ──
+async function soapCall(action, body) {
+  const envelope = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+               xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>${body}</soap:Body>
+</soap:Envelope>`;
+
+  const res = await fetch(SOAP_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/xml; charset=utf-8',
+      'SOAPAction': `"http://unisolutions.com.ar/${action}"`
+    },
+    body: envelope
+  });
+  const text = await res.text();
+  const parser = new DOMParser();
+  return parser.parseFromString(text, 'text/xml');
+}
+
+// ── CONSULTAR CONDUCTOR ──
+async function cargarConductorYDocumentos(nroDoc) {
+  try {
+    const xml = await soapCall('ConsultarConductor', `
+      <ConsultarConductor xmlns="http://unisolutions.com.ar/">
+        <ApiKey>${API_KEY}</ApiKey>
+        <request>
+          <NroDocumento>${nroDoc}</NroDocumento>
+        </request>
+      </ConsultarConductor>`);
+
+    const result = xml.querySelector('ConsultarConductorResult');
+    if (result) {
+      conductor.nombre   = get(result, 'Nombre') || conductor.nombre;
+      conductor.apellido = get(result, 'Apellido') || '';
+      conductor.login    = get(result, 'Login') || '';
+    }
+
+    await cargarDocumentos(nroDoc);
+  } catch(e) {
+    showView('error');
+    document.getElementById('error-msg').textContent = 'Error al conectar con UNIGIS: ' + e.message;
+  }
+}
+
+// ── OBTENER DOCUMENTOS ──
+async function cargarDocumentos(nroDoc) {
+  try {
+    const xml = await soapCall('ObtenerDocumentosEntidad', `
+      <ObtenerDocumentosEntidad xmlns="http://unisolutions.com.ar/">
+        <ApiKey>${API_KEY}</ApiKey>
+        <obtenerDocumentos>
+          <Entidad>Conductor</Entidad>
+          <Referencia>${nroDoc}</Referencia>
+        </obtenerDocumentos>
+      </ObtenerDocumentosEntidad>`);
+
+    const docs = Array.from(xml.querySelectorAll('pDocumentoEntidad'));
+    renderProfile('profile-card');
+    renderProfile('profile-empty');
+
+    if (docs.length === 0) {
+      showView('empty');
+      return;
+    }
+
+    renderDocs(docs);
+    showView('main');
+  } catch(e) {
+    showView('error');
+    document.getElementById('error-msg').textContent = 'Error al obtener documentos: ' + e.message;
+  }
+}
+
+// ── RENDER PERFIL ──
+function renderProfile(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const initiales = ((conductor.nombre[0] || '') + (conductor.apellido[0] || '')).toUpperCase() || '?';
+  const nombreCompleto = [conductor.nombre, conductor.apellido].filter(Boolean).join(' ');
+  el.innerHTML = `
+    <div class="avatar">${initiales}</div>
+    <div>
+      <div class="profile-name">${nombreCompleto}</div>
+      <div class="profile-doc">${conductor.nroDoc}</div>
+    </div>`;
+}
+
+// ── RENDER DOCUMENTOS ──
+function renderDocs(docs) {
+  const list = document.getElementById('doc-list');
+  list.innerHTML = '';
+  docs.forEach(doc => {
+    const tipo    = get(doc, 'TipoDocumento') || '—';
+    const ref     = get(doc, 'ReferenciaDocumento') || '—';
+    const estado  = get(doc, 'EstadoDocumento') || '';
+    const emision = formatDate(get(doc, 'FechaEmision'));
+    const expira  = formatDate(get(doc, 'FechaExpiracion'));
+
+    const { cls, label } = badgeEstado(estado, get(doc, 'FechaExpiracion'));
+
+    list.innerHTML += `
+      <div class="doc-card">
+        <div class="doc-type-icon">📄</div>
+        <div class="doc-info">
+          <div class="doc-tipo">${tipo}</div>
+          <div class="doc-ref">${ref}</div>
+          <div class="doc-dates">
+            <div class="doc-date-item">Emisión <strong>${emision}</strong></div>
+            <div class="doc-date-item">Vence <strong>${expira}</strong></div>
+          </div>
+        </div>
+        <span class="doc-badge ${cls}">${label}</span>
+      </div>`;
+  });
+}
+
+// ── BADGE ESTADO ──
+function badgeEstado(estado, fechaExpStr) {
+  if (!fechaExpStr) return { cls: 'badge-neutral', label: estado || 'Sin estado' };
+  const parts = fechaExpStr.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  if (!parts) return { cls: 'badge-neutral', label: estado || '—' };
+  const exp = new Date(`${parts[3]}-${parts[2]}-${parts[1]}`);
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const dias = Math.ceil((exp - hoy) / 86400000);
+  if (dias < 0)  return { cls: 'badge-venc',    label: 'Vencido' };
+  if (dias < 30) return { cls: 'badge-warn',    label: `Vence en ${dias}d` };
+  return           { cls: 'badge-ok',      label: 'Vigente' };
+}
+
+// ── SUBIR DOCUMENTO ──
+let fileBase64 = null, fileTipo = null, fileNombre = null;
+
+function onFileChange(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  fileNombre = file.name;
+  fileTipo   = file.type;
+  document.getElementById('fileName').textContent = file.name;
+  document.getElementById('fileZone').classList.add('has-file');
+  const reader = new FileReader();
+  reader.onload = () => { fileBase64 = reader.result.split(',')[1]; };
+  reader.readAsDataURL(file);
+}
+
+async function submitDoc() {
+  const tipo   = document.getElementById('tipoDoc').value;
+  const emis   = document.getElementById('fechaEmision').value;
+  const venc   = document.getElementById('fechaVencimiento').value;
+  const btn    = document.getElementById('btnEnviar');
+
+  if (!emis || !venc) { showToast('Complete las fechas', 'error'); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+
+  const archivosXml = fileBase64 ? `
+    <ArchivosAsociados>
+      <pArchivoDoc>
+        <Descripcion>${fileNombre || 'archivo'}</Descripcion>
+        <TipoArchivo>${fileTipo || 'application/octet-stream'}</TipoArchivo>
+        <Contenido>${fileBase64}</Contenido>
+        <AsociacionDirecta>false</AsociacionDirecta>
+      </pArchivoDoc>
+    </ArchivosAsociados>` : '';
+
+  try {
+    const xml = await soapCall('CrearDocumentos', `
+      <CrearDocumentos xmlns="http://unisolutions.com.ar/">
+        <ApiKey>${API_KEY}</ApiKey>
+        <Documentos>
+          <pDocumento>
+            <TipoDocumento>${tipo}</TipoDocumento>
+            <Referencia>${conductor.nroDoc}</Referencia>
+            <FechaEmision>${emis}T00:00:00</FechaEmision>
+            <FechaExpiracion>${venc}T00:00:00</FechaExpiracion>
+            <ReferenciaConductor>${conductor.nroDoc}</ReferenciaConductor>
+            <ForzarActualizacion>false</ForzarActualizacion>
+            <Asociaciones>
+              <ReferenciaConductor>${conductor.nroDoc}</ReferenciaConductor>
+            </Asociaciones>
+            ${archivosXml}
+            <CrearDocumentoRequeridoViaje>false</CrearDocumentoRequeridoViaje>
+            <IdViaje>-1</IdViaje>
+            <IdParada>-1</IdParada>
+            <EsDocumentoRequerido>false</EsDocumentoRequerido>
+          </pDocumento>
+        </Documentos>
+      </CrearDocumentos>`);
+
+    const result = xml.querySelector('CrearDocumentosResult');
+    const val = result ? parseInt(result.textContent) : 0;
+
+    if (val > 0) {
+      showToast('Documento subido correctamente ✓', 'success');
+      closeModal();
+      showView('loading');
+      setTimeout(() => cargarDocumentos(conductor.nroDoc), 1500);
+    } else {
+      showToast('No se pudo crear el documento', 'error');
+    }
+  } catch(e) {
+    showToast('Error: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Enviar documento';
+  }
+}
+
+// ── UTILS ──
+function get(node, tag) {
+  const el = node.querySelector(tag);
+  return el ? el.textContent.trim() : '';
+}
+
+function formatDate(str) {
+  if (!str) return '—';
+  const m = str.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  if (m) return `${m[1]}/${m[2]}/${m[3]}`;
+  const d = new Date(str);
+  if (isNaN(d)) return str;
+  return d.toLocaleDateString('es-CL');
+}
+
+function showView(name) {
+  ['loading','error','empty','main'].forEach(v => {
+    document.getElementById('view-' + v).classList.toggle('active', v === name);
+  });
+}
+
+function openModal() {
+  document.getElementById('modal').classList.add('open');
+  fileBase64 = null; fileTipo = null; fileNombre = null;
+  document.getElementById('fileName').textContent = '';
+  document.getElementById('fileZone').classList.remove('has-file');
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Cerrar modal al tocar overlay
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal')) closeModal();
+});
+</script>
+</body>
+</html>
